@@ -1,0 +1,160 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base {
+  :root {
+    --bg-primary: #080B14;
+    --bg-secondary: #0F1420;
+    --bg-card: rgba(255, 255, 255, 0.03);
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-red: rgba(255, 45, 45, 0.35);
+    --accent-red: #FF2D2D;
+    --accent-red-glow: rgba(255, 45, 45, 0.25);
+    --accent-red-soft: rgba(255, 45, 45, 0.08);
+    --text-primary: #F0F4FF;
+    --text-secondary: #8899BB;
+    --text-muted: #445566;
+    --success: #00CC66;
+    --warning: #FFAA00;
+    --critical: #FF0000;
+    --font-heading: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    /* SHADCN DEFAULTS SO COMPONENTS DON'T BREAK */
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --radius: 0.625rem;
+  }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+}
+
+.glass-card-red {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-red);
+  border-radius: 16px;
+  box-shadow: 0 0 40px var(--accent-red-glow), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.glow-red {
+  box-shadow: 0 0 20px var(--accent-red-glow);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #FF2D2D 0%, #FF6B6B 50%, #FF2D2D 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Animated gradient background */
+.animated-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.animated-bg::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(ellipse at 20% 50%, rgba(255,45,45,0.05) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 20%, rgba(255,45,45,0.03) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 80%, rgba(255,100,100,0.04) 0%, transparent 50%);
+  animation: bgShift 15s ease-in-out infinite alternate;
+}
+
+@keyframes bgShift {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(2%, 2%) rotate(1deg); }
+}
+
+/* Pulse animation for emergency elements */
+@keyframes emergencyPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(255,45,45,0.4); }
+  50% { box-shadow: 0 0 40px rgba(255,45,45,0.8), 0 0 80px rgba(255,45,45,0.3); }
+}
+
+.emergency-pulse {
+  animation: emergencyPulse 2s ease-in-out infinite;
+}
+
+/* Shimmer loading */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* Scan line animation for QR */
+@keyframes scanLine {
+  0% { top: 0%; }
+  100% { top: 100%; }
+}
+
+/* Fade up animation */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up {
+  animation: fadeUp 0.6s ease forwards;
+}
+
+.fade-up-delay-1 { animation-delay: 0.1s; opacity: 0; animation-fill-mode: forwards; }
+.fade-up-delay-2 { animation-delay: 0.2s; opacity: 0; animation-fill-mode: forwards; }
+.fade-up-delay-3 { animation-delay: 0.3s; opacity: 0; animation-fill-mode: forwards; }
+.fade-up-delay-4 { animation-delay: 0.4s; opacity: 0; animation-fill-mode: forwards; }

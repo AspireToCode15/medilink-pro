@@ -1,0 +1,19 @@
+{
+  "rescue": {
+    "emergencyAlert": "EMERGENCY — Medical ID",
+    "scannedAt": "Scanned: {time}",
+    "age": "Age",
+    "bloodGroup": "Blood Group",
+    "organDonor": "Organ Donor",
+    "conditions": "Medical Conditions",
+    "allergies": "Allergies",
+    "medications": "Current Medications",
+    "emergencyContacts": "Emergency Contacts",
+    "callNow": "Call Now",
+    "firstAidHints": "First Aid Guidance for this Patient",
+    "shareLocation": "Notify Emergency Contacts",
+    "saveId": "Save Medical ID",
+    "noneReported": "None reported",
+    "notifyMessage": "🚨 EMERGENCY ALERT 🚨\n\nI have found {name} and they may need emergency help.\n\nCurrent location: [Tap to share your location]\n\nThis message was sent via MediLink Emergency Medical ID System\nmedilink.app"
+  }
+}
