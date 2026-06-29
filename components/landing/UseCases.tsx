@@ -3,13 +3,15 @@
 import { motion } from 'framer-motion'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 
+import { Mountain, Users, Syringe, Bike, Plane, Backpack } from 'lucide-react'
+
 const useCasesData = [
-  { icon: '🏔️', title: 'Hikers & Trekkers', desc: 'Remote areas, no signal — QR works offline once cached' },
-  { icon: '🧓', title: 'Elderly & Parents', desc: 'Create profiles for your parents in minutes' },
-  { icon: '💉', title: 'Diabetics & Epileptics', desc: 'Critical condition alerts for first responders' },
-  { icon: '🏍️', title: 'Bike Riders', desc: 'Stick QR on helmet — instantly scannable after accident' },
-  { icon: '✈️', title: 'Solo Travelers', desc: 'Emergency contacts across language barriers' },
-  { icon: '🎒', title: 'School Children', desc: 'Parents get notified when QR is scanned' },
+  { icon: Mountain, title: 'Hikers & Trekkers', desc: 'Remote areas, no signal — QR works offline once cached' },
+  { icon: Users, title: 'Elderly & Parents', desc: 'Create profiles for your parents in minutes' },
+  { icon: Syringe, title: 'Diabetics & Epileptics', desc: 'Critical condition alerts for first responders' },
+  { icon: Bike, title: 'Bike Riders', desc: 'Stick QR on helmet — instantly scannable after accident' },
+  { icon: Plane, title: 'Solo Travelers', desc: 'Emergency contacts across language barriers' },
+  { icon: Backpack, title: 'School Children', desc: 'Parents get notified when QR is scanned' },
 ]
 
 function UseCasesContent() {
@@ -44,9 +46,11 @@ function UseCasesContent() {
             key={index} 
             variants={cardVariants} 
             whileHover={{ y: -4, borderColor: 'rgba(255, 45, 45, 0.4)', boxShadow: '0 0 20px rgba(255, 45, 45, 0.1)' }}
-            className="glass-card p-6 transition-all"
+            className="glass-card p-6 transition-all group"
           >
-            <div className="text-4xl mb-4">{item.icon}</div>
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FF2D2D]/20 to-[#FF2D2D]/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 border border-[#FF2D2D]/20 shadow-[0_0_15px_rgba(255,45,45,0.15)]">
+              <item.icon className="w-6 h-6 text-[#FF2D2D]" strokeWidth={1.5} />
+            </div>
             <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
             <p className="text-[#8899BB] text-sm leading-relaxed">{item.desc}</p>
           </motion.div>

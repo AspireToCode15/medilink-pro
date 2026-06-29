@@ -3,11 +3,13 @@
 import { motion } from 'framer-motion'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 
+import { Lock, Shield, Server, EyeOff } from 'lucide-react'
+
 const badges = [
-  { icon: '🔐', text: 'AES-256 Encrypted' },
-  { icon: '🛡️', text: 'Zero Plain Text Storage' },
-  { icon: '🔒', text: 'Row Level Security' },
-  { icon: '📵', text: 'No Third-Party Sharing' }
+  { icon: Lock, text: 'AES-256 Encrypted' },
+  { icon: Shield, text: 'Zero Plain Text Storage' },
+  { icon: Server, text: 'Row Level Security' },
+  { icon: EyeOff, text: 'No Third-Party Sharing' }
 ]
 
 function SecurityBadgesContent() {
@@ -36,9 +38,11 @@ function SecurityBadgesContent() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="glass-card-red py-3 px-6 flex items-center space-x-3 text-sm font-medium text-white shadow-[0_0_15px_rgba(255,45,45,0.15)]"
+              className="glass-card-red py-3 px-6 flex items-center space-x-3 text-sm font-medium text-white shadow-[0_0_15px_rgba(255,45,45,0.15)] group"
             >
-              <span className="text-xl">{badge.icon}</span>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF2D2D]/20 to-[#FF2D2D]/5 flex items-center justify-center border border-[#FF2D2D]/20 shadow-[0_0_10px_rgba(255,45,45,0.1)] group-hover:scale-110 transition-transform">
+                <badge.icon className="w-4 h-4 text-[#FF2D2D]" strokeWidth={2} />
+              </div>
               <span>{badge.text}</span>
             </motion.div>
           ))}
