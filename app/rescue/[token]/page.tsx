@@ -99,9 +99,9 @@ export default async function RescuePage({
             <div style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 8 }}>{profile.member_name}</div>
             <div style={{ fontSize: '1rem', color: '#8899BB', marginBottom: 16 }}>Age: {profile.age}</div>
             <div style={{
-              fontSize: '5rem', fontWeight: 900, color: '#FF2D2D',
+              fontSize: 'clamp(3rem, 15vw, 5rem)', fontWeight: 900, color: '#FF2D2D',
               border: '3px solid #FF2D2D', borderRadius: 12,
-              padding: '8px 32px', display: 'inline-block',
+              padding: 'clamp(4px, 2vw, 8px) clamp(16px, 8vw, 32px)', display: 'inline-block',
               boxShadow: '0 0 30px rgba(255,45,45,0.4)'
             }}>
               {profile.blood_group}

@@ -44,7 +44,7 @@ export default function FamilyPage() {
           <h1 className="text-3xl font-heading font-bold">Family Members</h1>
           <p className="text-muted-foreground">Manage emergency IDs for dependents (up to 5 on free tier).</p>
         </div>
-        <Button onClick={() => window.location.href = '/family/add'}>
+        <Button className="min-h-[48px]" onClick={() => window.location.href = '/family/add'}>
           <Plus className="h-4 w-4 mr-2" /> Add Member
         </Button>
       </div>
@@ -55,7 +55,7 @@ export default function FamilyPage() {
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-xl font-bold mb-2">No Family Members Added</h3>
             <p className="text-muted-foreground mb-6">Create QR IDs for your parents or children.</p>
-            <Button onClick={() => window.location.href = '/family/add'} variant="outline">
+            <Button className="min-h-[48px]" onClick={() => window.location.href = '/family/add'} variant="outline">
               Add First Member
             </Button>
           </CardContent>
@@ -74,10 +74,10 @@ export default function FamilyPage() {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between border-t border-border pt-4">
-                <Button variant="outline" size="sm" onClick={() => window.open(`/rescue/${member.rescue_token}`, '_blank')}>
+                <Button variant="outline" className="min-h-[48px]" onClick={() => window.open(`/rescue/${member.rescue_token}`, '_blank')}>
                   <QrCode className="h-4 w-4 mr-2" /> View QR
                 </Button>
-                <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-400">
+                <Button variant="ghost" className="text-red-500 hover:text-red-400 min-h-[48px] min-w-[48px]">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </CardFooter>

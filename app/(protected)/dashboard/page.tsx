@@ -120,10 +120,10 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="mt-4 pt-4 border-t border-[#FF2D2D]/20 relative z-10 flex gap-2">
-            <Link href="/settings" className="bg-[#FF2D2D] hover:bg-[#ff4545] text-white text-sm px-4 py-2 rounded-md font-medium transition-all shadow-[0_0_10px_rgba(255,45,45,0.2)] flex-1 text-center">
+            <Link href="/settings" className="bg-[#FF2D2D] hover:bg-[#ff4545] text-white text-sm px-4 rounded-md font-medium transition-all shadow-[0_0_10px_rgba(255,45,45,0.2)] flex-1 flex items-center justify-center min-h-[48px]">
               View & Print
             </Link>
-            <button className="bg-[#0F1420] hover:bg-white/5 border border-white/10 text-white p-2 rounded-md transition-all">
+            <button className="bg-[#0F1420] hover:bg-white/5 border border-white/10 text-white rounded-md transition-all flex items-center justify-center min-h-[48px] min-w-[48px]">
               <Share2 className="w-5 h-5" />
             </button>
           </div>

@@ -57,7 +57,16 @@ export const metadata: Metadata = {
   verification: {
     google: 'ADD_GOOGLE_SEARCH_CONSOLE_TOKEN_HERE'
   },
-  manifest: '/manifest.json'
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'MediLink'
+  },
+  icons: {
+    icon: '/icons/icon-192.png',
+    apple: '/icons/icon-192.png'
+  }
 };
 
 export default function RootLayout({
