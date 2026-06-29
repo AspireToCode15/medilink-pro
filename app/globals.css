@@ -58,6 +58,22 @@ body {
   overflow-x: hidden;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background: rgba(255, 45, 45, 0.3);
+  color: #ffffff;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+::-moz-selection {
+  background: rgba(255, 45, 45, 0.3);
+  color: #ffffff;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
 }
