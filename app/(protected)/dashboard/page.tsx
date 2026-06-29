@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { QrCode, AlertCircle, FileText, Users, Activity, FileHeart, Share2 } from 'lucide-react'
+import { QrCode, AlertCircle, FileText, Users, Activity, FileHeart, Share2, Lightbulb } from 'lucide-react'
 import QRCodeDisplay from '@/components/shared/QRCodeDisplay'
 import { runTriageEngine } from '@/lib/mediq-engine/triage-classifier'
 
@@ -59,7 +59,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8">
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 fade-up fade-up-delay-1">
         <div>
           <h1 className="text-3xl font-bold font-heading text-white">Dashboard</h1>
           <p className="text-[#8899BB] mt-1">Welcome back, {profile?.full_name}</p>
@@ -67,7 +67,7 @@ export default async function DashboardPage() {
       </div>
 
       {!isProfileComplete && (
-        <div className="glass-card-red p-6 flex flex-col sm:flex-row items-center gap-4 mb-6 relative overflow-hidden">
+        <div className="glass-card-red p-6 flex flex-col sm:flex-row items-center gap-4 mb-6 relative overflow-hidden fade-up fade-up-delay-2">
           <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-2xl pointer-events-none" />
           <AlertCircle className="h-10 w-10 text-[#FF2D2D] flex-shrink-0 emergency-pulse" />
           <div className="flex-1">
@@ -86,7 +86,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
         {/* Profile Summary Card */}
-        <div className="glass-card p-6 flex flex-col justify-between group hover:border-white/20 transition-all">
+        <div className="glass-card p-6 flex flex-col justify-between group hover:border-white/20 transition-all fade-up fade-up-delay-2">
           <div>
             <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center mb-4">
               <FileHeart className="h-5 w-5 text-blue-400" />
@@ -104,7 +104,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* QR Code Action Card */}
-        <div className="glass-card-red p-6 flex flex-col justify-between relative overflow-hidden">
+        <div className="glass-card-red p-6 flex flex-col justify-between relative overflow-hidden fade-up fade-up-delay-3">
           <div className="relative z-10 flex flex-col items-center">
             {rescueUrl ? (
               <QRCodeDisplay url={rescueUrl} size={160} />
@@ -130,7 +130,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* MedIQ Insights Card */}
-        <div className="glass-card p-6 flex flex-col justify-between">
+        <div className="glass-card p-6 flex flex-col justify-between fade-up fade-up-delay-3">
           <div>
             <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center mb-4">
               <Activity className="h-5 w-5 text-purple-400" />
@@ -151,15 +151,15 @@ export default async function DashboardPage() {
               )}
             </div>
             {firstAidHint && (
-              <p className="text-[#8899BB] text-xs mt-3 bg-white/5 p-2 rounded-md border border-white/5 line-clamp-2">
-                💡 {firstAidHint}
+              <p className="text-[#8899BB] text-xs mt-3 bg-white/5 p-2 rounded-md border border-white/5 line-clamp-2 flex items-start gap-1">
+                <Lightbulb className="w-4 h-4 text-yellow-400 flex-shrink-0" /> {firstAidHint}
               </p>
             )}
           </div>
         </div>
 
         {/* My Documents */}
-        <div className="glass-card p-6 flex flex-col justify-between group hover:border-white/20 transition-all">
+        <div className="glass-card p-6 flex flex-col justify-between group hover:border-white/20 transition-all fade-up fade-up-delay-4">
           <div>
             <div className="w-10 h-10 rounded-lg bg-teal-500/10 flex items-center justify-center mb-4">
               <FileText className="h-5 w-5 text-teal-400" />
@@ -177,7 +177,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Family Members */}
-        <div className="glass-card p-6 flex flex-col justify-between group hover:border-white/20 transition-all">
+        <div className="glass-card p-6 flex flex-col justify-between group hover:border-white/20 transition-all fade-up fade-up-delay-4">
           <div>
             <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center mb-4">
               <Users className="h-5 w-5 text-orange-400" />

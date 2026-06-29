@@ -1,21 +1,11 @@
-# Medilink Codebase Audit Plan
+# Find Nearby Hospitals Feature Plan
 
 ## Objective
-Identify, repair, and verify all Next.js 14 codebase and runtime issues to ensure smooth Vercel deployment and 100% test coverage compliance.
+Add a "Find Nearby Hospitals" emergency button to the bottom of the rescue page (`app/rescue/[token]/page.tsx`). The button must be a Server Component compatible link (`<a>` tag with target="_blank"), responsive & premium UI, styled as a prominent emergency action, using a lucide-react icon, without using client-side hooks, and verify everything passes build and tests, then push to GitHub.
 
 ## Steps
-1. **Explore & Analyze**: Spawn 3 Explorer agents to review the codebase.
-   - Target files/directories: `app/`, `components/`, `lib/`, `middleware.ts`, `next.config.ts`, `package.json`, `tsconfig.json`.
-   - Explorer focus: Find compile-time (`npm run build`, `tsc --noEmit`), runtime, dynamic config, middleware, and upload issues.
-2. **Decompose & Design**:
-   - Synthesize findings from Explorers into a master `PROJECT.md` file.
-   - Decompose into implementation milestones.
-   - Set up the E2E Testing track and document in `TEST_INFRA.md`.
-3. **Execute Dual Track**:
-   - **Track 1 (E2E Testing)**: Create opaque-box E2E test suite covering Tiers 1-4. Generate `TEST_READY.md`.
-   - **Track 2 (Implementation)**: Decompose and resolve code issues milestone by milestone. Verify each milestone with workers, reviewers, and forensic audit.
-4. **Final Integration and Verification**:
-   - Run E2E test suite against the fully integrated and fixed code.
-   - Conduct white-box Tier 5 adversarial coverage hardening.
-   - Run the final Forensic Audit.
-   - Inform user for victory audit.
+1. **Explore & Analyze**: Spawn 3 Explorer agents to look at `app/rescue/[token]/page.tsx` and identify exactly where to place the button and what premium/emergency style classes and Lucide icons are used.
+2. **Decompose & Plan**: Write `PROJECT.md` specifying the interface/UI design changes.
+3. **Execute**: Spawn 1 Worker to implement the changes and verify it builds.
+4. **Verify**: Spawn 2 Reviewers, 2 Challengers, and 1 Forensic Auditor to verify functionality, SSR constraints, code styling, and ensure no integrity issues.
+5. **Release**: Push to `origin main` using the specified commit message.

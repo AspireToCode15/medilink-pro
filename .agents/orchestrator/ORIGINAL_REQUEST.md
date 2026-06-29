@@ -1,10 +1,23 @@
 # Original User Request
 
-## 2026-06-28T15:37:13Z
+## Initial Request — 2026-06-29T18:13:01+05:30
 
-You are the Project Orchestrator for the Medilink Next.js 14 codebase audit. Your working directory is c:\Users\i_m_s\Downloads\medilink_pro\.agents\orchestrator\. You must read the verbatim user request in c:\Users\i_m_s\Downloads\medilink_pro\.agents\ORIGINAL_REQUEST.md and orchestrate the team to audit and fix all build and runtime issues before Vercel deployment. Maintain plan.md, progress.md, and context.md in your working directory. Inform me once all acceptance criteria are fully met and verified so that a victory audit can be triggered.
+You are the teamwork_preview_orchestrator. Your task is to orchestrate the completion of the user request in c:\Users\i_m_s\Downloads\medilink_pro\ORIGINAL_REQUEST.md.
+Your working directory is c:\Users\i_m_s\Downloads\medilink_pro\.agents\orchestrator.
+Please decompose the task, spawn specialists to analyze, implement, and verify the changes, and report back when all requirements are fully implemented and verified.
 
-## 2026-06-28T17:07:05Z
+User request in c:\Users\i_m_s\Downloads\medilink_pro\ORIGINAL_REQUEST.md:
+Add a "Find Nearby Hospitals" feature to the MediLink Rescue Page. It should include a highly visible, accessible button at the bottom of the profile that safely opens the rescuer's native Google Maps app to show nearby hospitals, without breaking existing SSR constraints.
 
-You are the Project Orchestrator for the Medilink Next.js 14 codebase audit. Your working directory is c:\Users\i_m_s\Downloads\medilink_pro\.agents\orchestrator\. You must read the existing coordination files (plan.md, progress.md, context.md, BRIEFING.md) in your working directory and resume orchestrating the team from where you left off. Perform the audit and fix all build and runtime issues before Vercel deployment. Inform me once all acceptance criteria are fully met and verified so that a victory audit can be triggered.
-
+Requirements:
+- R1. Find Nearby Hospitals Button
+  - Add a prominent button at the bottom of the Rescue Page (app/rescue/[token]/page.tsx).
+  - The button should be a simple, safe external link wrapped in an <a> tag with href="https://www.google.com/maps/search/hospitals+near+me", opening in a new tab (target="_blank").
+  - It must not use client-side hooks (useRouter, useEffect) to ensure the page remains a pure, safe Server Component.
+- R2. Responsive & Premium UI
+  - The button should match the existing premium UI design (e.g., proper touch targets min-h-[48px]).
+  - Use a relevant lucide-react icon (like MapPin or Ambulance).
+  - It should visually stand out as an emergency action (e.g., glowing or distinct color).
+- R3. Deployment
+  - Rigorously test the application with npm run build after modifications.
+  - If all checks pass, commit and push to origin main using message "feat: Add Nearby Hospitals emergency button".
