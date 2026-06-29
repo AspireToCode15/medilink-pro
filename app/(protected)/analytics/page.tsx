@@ -146,7 +146,7 @@ export default function AnalyticsPage() {
                   <div>
                     <div className="font-medium">QR Scanned</div>
                     <div className="text-xs text-muted-foreground font-mono mt-1">
-                      {log.ip_address} • {log.user_agent.substring(0, 30)}...
+                      {log.ip_address || 'Unknown IP'} • {log.user_agent ? log.user_agent.substring(0, 30) : 'Unknown Device'}...
                     </div>
                   </div>
                   <div className="text-right">
