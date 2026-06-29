@@ -1,221 +1,224 @@
 export const dynamic = 'force-dynamic'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { decryptPhone } from '@/lib/contact-masker'
 import { runTriageEngine } from '@/lib/mediq-engine/triage-classifier'
-import { getDictionary } from '@/lib/i18n'
-import { notFound } from 'next/navigation'
-import { AlertTriangle, Activity, HeartPulse, ShieldAlert, CheckCircle2, Droplets } from 'lucide-react'
-import { logScan } from '@/lib/scan-logger'
-import { headers } from 'next/headers'
-import Link from 'next/link'
-import crypto from 'crypto'
-import { CallButton } from '@/components/CallButton'
 
-export default async function RescuePage({ params }: { params: Promise<{ token: string }> }) {
-  const { token } = await params
-  const supabase = await createClient()
-  const dict = getDictionary()
-  
-  // 1. Fetch Profile
-  const { data: profile, error } = await supabase
-    .from('medical_profiles')
-    .select('*')
-    .eq('rescue_token', token)
-    .single()
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+)
 
-  if (error || !profile) {
-    notFound()
-  }
+export default async function RescuePage({
+  params,
+}: {
+  params: Promise<{ token: string }>
+}) {
+  try {
+    const { token } = await params
 
-  // 2. Fetch Contacts
-  const { data: contacts } = await supabase
-    .from('emergency_contacts')
-    .select('*')
-    .eq('medical_profile_id', profile.id)
-    .order('priority', { ascending: true })
+    if (!token) {
+      return <ErrorPage message="Invalid QR code" />
+    }
 
-  // 3. Log Scan
-  const headersList = headers()
-  const ip = headersList.get('x-forwarded-for') || 'unknown'
-  const userAgent = headersList.get('user-agent') || 'unknown'
-  
-  const scanLogId = crypto.randomUUID()
-  // Fire and forget
-  logScan(scanLogId, profile.id, ip, userAgent).catch(console.error)
+    // Fetch medical profile
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('medical_profiles')
+      .select('*')
+      .eq('rescue_token', token)
+      .single()
 
-  // 4. Run Triage Engine
-  const triage = runTriageEngine(
-    profile.conditions || '',
-    profile.allergies || '',
-    profile.current_medications || '',
-    profile.age,
-    profile.blood_group
-  )
+    if (profileError || !profile) {
+      return <ErrorPage message="QR code is invalid or expired" />
+    }
 
-  const scanTime = new Date().toLocaleTimeString()
+    // Fetch emergency contacts
+    const { data: contacts } = await supabaseAdmin
+      .from('emergency_contacts')
+      .select('*')
+      .eq('medical_profile_id', profile.id)
+      .order('priority', { ascending: true })
 
-  return (
-    <div className="min-h-screen bg-[#080B14] text-white font-sans selection:bg-[#FF2D2D]/30 relative overflow-hidden">
-      <div className="animated-bg" />
-      
-      {/* Top Emergency Banner */}
-      <div className="bg-[#FF2D2D] px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-[0_4px_30px_rgba(255,45,45,0.4)] border-b border-red-400">
-        <div className="flex items-center space-x-2 emergency-pulse">
-          <AlertTriangle className="h-6 w-6 text-white" />
-          <span className="font-bold text-lg tracking-wider uppercase font-heading">{dict.rescue.emergencyAlert}</span>
+    // Decrypt phone numbers server side
+    const decryptedContacts = (contacts || []).map((c: any) => ({
+      ...c,
+      phone_real: (() => {
+        try { return decryptPhone(c.phone_encrypted) }
+        catch { return '' }
+      })()
+    }))
+
+    // Log scan
+    await supabaseAdmin.from('scan_logs').insert({
+      medical_profile_id: profile.id,
+      scanned_at: new Date().toISOString(),
+    }).then(() => {})
+
+    // Run MedIQ Engine
+    const triage = runTriageEngine(
+      profile.conditions || '',
+      profile.allergies || '',
+      profile.current_medications || '',
+      profile.age,
+      profile.blood_group
+    )
+
+    // RENDER
+    return (
+      <div style={{ background: '#080B14', minHeight: '100vh', color: '#F0F4FF', fontFamily: 'Inter, sans-serif' }}>
+
+        {/* Sticky Emergency Header */}
+        <div style={{ background: '#FF2D2D', padding: '12px 20px', position: 'sticky', top: 0, zIndex: 100, display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: '#fff', animation: 'pulse 1.5s infinite' }}></span>
+          <strong style={{ fontSize: '1rem', letterSpacing: '0.05em' }}>⚠️ EMERGENCY MEDICAL ID</strong>
+          <span style={{ marginLeft: 'auto', fontSize: '0.8rem', opacity: 0.9 }}>
+            Scanned: {new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+          </span>
         </div>
-        <div className="text-xs font-mono opacity-90 font-medium">
-          {dict.rescue.scannedAt.replace('{time}', scanTime)}
-        </div>
-      </div>
 
-      <div className="max-w-2xl mx-auto p-4 space-y-6 pb-24 relative z-10">
-        
-        {/* Triage Alerts (If Any) - Moved to top for immediate rescuer visibility */}
-        {triage.overallSeverity !== 'NONE' && (
-          <div className="glass-card-red border-l-4 border-l-[#FF2D2D] p-5">
-            <div className="flex items-start space-x-3">
-              <ShieldAlert className="h-7 w-7 text-[#FF2D2D] flex-shrink-0 mt-0.5 emergency-pulse" />
-              <div>
-                <h3 className="font-bold text-[#FF2D2D] text-lg mb-2 uppercase tracking-wide">{triage.severityLabel}</h3>
-                <ul className="space-y-2 text-red-100 text-sm font-medium">
-                  {triage.rescuerAlerts.map((alert, i) => (
-                    <li key={i} className="flex items-start">
-                      <span className="mr-2 mt-0.5 text-[#FF2D2D]">•</span>
-                      <span>{alert}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
+        <div style={{ maxWidth: 520, margin: '0 auto', padding: '20px 16px' }}>
 
-        {/* Patient Identity Card */}
-        <div className="glass-card p-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-[#FF2D2D]/10 blur-[60px] -z-10 rounded-full"></div>
-          <h1 className="text-4xl md:text-5xl font-black font-heading mb-6 tracking-tight text-white">{profile.member_name}</h1>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-2">
-            <div className="bg-[#0F1420] p-4 rounded-xl border border-white/5 shadow-inner">
-              <div className="text-sm text-[#8899BB] mb-1 font-medium">{dict.rescue.age}</div>
-              <div className="text-2xl font-bold">{profile.age} Yrs</div>
+          {/* MedIQ Triage Banner */}
+          {triage.overallSeverity !== 'NONE' && (
+            <div style={{
+              background: triage.overallSeverity === 'CRITICAL' ? '#FF0000' :
+                          triage.overallSeverity === 'HIGH' ? '#FF6600' :
+                          triage.overallSeverity === 'MEDIUM' ? '#FFAA00' : '#444',
+              borderRadius: 12, padding: '16px 20px', marginBottom: 16
+            }}>
+              <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{triage.severityLabel}</div>
+              {triage.rescuerAlerts.map((alert: string, i: number) => (
+                <div key={i} style={{ marginTop: 6, fontSize: '0.9rem' }}>{alert}</div>
+              ))}
             </div>
-            
-            <div className="bg-[#0F1420] p-4 rounded-xl border border-[#FF2D2D]/20 shadow-inner relative overflow-hidden">
-              <div className="absolute -right-2 -bottom-2 text-[#FF2D2D] opacity-10">
-                <Droplets className="w-16 h-16" />
-              </div>
-              <div className="text-sm text-[#8899BB] mb-1 font-medium">{dict.rescue.bloodGroup}</div>
-              <div className="text-3xl font-bold text-[#FF2D2D] flex items-center">
-                {profile.blood_group}
-              </div>
-            </div>
+          )}
 
+          {/* Patient Identity */}
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,45,45,0.35)', borderRadius: 16, padding: 24, marginBottom: 16, textAlign: 'center' }}>
+            <div style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 8 }}>{profile.member_name}</div>
+            <div style={{ fontSize: '1rem', color: '#8899BB', marginBottom: 16 }}>Age: {profile.age}</div>
+            <div style={{
+              fontSize: '5rem', fontWeight: 900, color: '#FF2D2D',
+              border: '3px solid #FF2D2D', borderRadius: 12,
+              padding: '8px 32px', display: 'inline-block',
+              boxShadow: '0 0 30px rgba(255,45,45,0.4)'
+            }}>
+              {profile.blood_group}
+            </div>
             {profile.organ_donor && (
-              <div className="bg-[#0F1420] p-4 rounded-xl border border-green-500/20 col-span-2 md:col-span-1 flex flex-col justify-center">
-                <div className="text-green-500 font-bold flex items-center text-lg">
-                  <CheckCircle2 className="h-6 w-6 mr-2" />
-                  {dict.rescue.organDonor}
-                </div>
+              <div style={{ marginTop: 12, background: '#00CC66', color: '#fff', borderRadius: 20, padding: '4px 16px', display: 'inline-block', fontSize: '0.85rem', fontWeight: 600 }}>
+                ♥ ORGAN DONOR
               </div>
             )}
           </div>
-        </div>
 
-        {/* Medical Information */}
-        <div className="glass-card overflow-hidden !p-0">
-          <div className="p-4 border-b border-white/5 bg-white/[0.02]">
-            <h2 className="text-xl font-bold font-heading text-white">{dict.rescue.conditions}</h2>
-          </div>
-          <div className="p-5 text-gray-300 font-medium leading-relaxed">
-            {profile.conditions || dict.rescue.noneReported}
-          </div>
-        </div>
-
-        <div className="glass-card overflow-hidden !p-0">
-          <div className="p-4 border-b border-white/5 bg-white/[0.02]">
-            <h2 className="text-xl font-bold font-heading text-white">{dict.rescue.allergies}</h2>
-          </div>
-          <div className="p-5 font-medium leading-relaxed text-[#FF2D2D]">
-            {profile.allergies || <span className="text-gray-400 font-normal">{dict.rescue.noneReported}</span>}
-          </div>
-        </div>
-
-        <div className="glass-card overflow-hidden !p-0">
-          <div className="p-4 border-b border-white/5 bg-white/[0.02]">
-            <h2 className="text-xl font-bold font-heading text-white">{dict.rescue.medications}</h2>
-          </div>
-          <div className="p-5 text-gray-300 font-medium leading-relaxed">
-            {profile.current_medications || dict.rescue.noneReported}
-          </div>
-        </div>
-
-        {/* First Aid Hints */}
-        {triage.firstAidHints.length > 0 && (
-          <div className="glass-card overflow-hidden !p-0 border-blue-500/30">
-            <div className="p-4 border-b border-blue-500/20 bg-blue-500/10">
-              <h2 className="text-xl font-bold font-heading text-blue-400">{dict.rescue.firstAidHints}</h2>
+          {/* Medical Info */}
+          {profile.conditions && (
+            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,45,45,0.2)', borderRadius: 12, padding: 16, marginBottom: 12 }}>
+              <div style={{ fontWeight: 600, marginBottom: 6, color: '#FF6B6B' }}>⚕️ Medical Conditions</div>
+              <div style={{ color: '#F0F4FF' }}>{profile.conditions}</div>
             </div>
-            <div className="p-5 text-blue-100 bg-[#0F1420]">
-              <ul className="space-y-3 font-medium">
-                {triage.firstAidHints.map((hint, i) => (
-                  <li key={i} className="flex items-start">
-                    <Activity className="h-5 w-5 mr-3 flex-shrink-0 text-blue-400 mt-0.5" />
-                    <span>{hint}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* Emergency Contacts */}
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold font-heading mb-4 px-2 text-white">{dict.rescue.emergencyContacts}</h2>
-          <div className="space-y-4">
-            {contacts?.map((contact) => {
-              // SECURITY: Decrypt server-side. 
-              // The decrypted number ONLY goes into the href attr.
-              const decryptedNumber = decryptPhone(contact.phone_encrypted);
-              
-              return (
-                <div key={contact.id} className="glass-card p-5 flex items-center justify-between group">
-                  <div>
-                    <h3 className="text-xl font-bold text-white">{contact.contact_name}</h3>
-                    <div className="text-[#FF2D2D] font-medium text-sm mt-1 uppercase tracking-wider">{contact.relationship}</div>
-                    <div className="text-xl font-mono mt-2 tracking-widest text-[#8899BB]">{contact.phone_masked}</div>
-                  </div>
-                  
-                  {/* The actual number is never rendered in visible text */}
-                  <CallButton 
-                    phoneNumber={decryptedNumber} 
-                    contactName={contact.contact_name} 
-                    scanLogId={scanLogId} 
-                  />
+          {profile.allergies && (
+            <div style={{ background: 'rgba(255,45,45,0.08)', border: '1px solid rgba(255,45,45,0.4)', borderRadius: 12, padding: 16, marginBottom: 12 }}>
+              <div style={{ fontWeight: 600, marginBottom: 6, color: '#FF2D2D' }}>⚠️ Allergies</div>
+              <div style={{ color: '#F0F4FF' }}>{profile.allergies}</div>
+            </div>
+          )}
+
+          {profile.current_medications && (
+            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: 16, marginBottom: 12 }}>
+              <div style={{ fontWeight: 600, marginBottom: 6, color: '#8899BB' }}>💊 Current Medications</div>
+              <div style={{ color: '#F0F4FF' }}>{profile.current_medications}</div>
+            </div>
+          )}
+
+          {/* Emergency Contacts */}
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 20, marginBottom: 16 }}>
+            <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 16 }}>📞 EMERGENCY CONTACTS — Tap to Call</div>
+            {decryptedContacts.length === 0 && (
+              <div style={{ color: '#8899BB' }}>No emergency contacts added</div>
+            )}
+            {decryptedContacts.map((contact: any, i: number) => (
+              <div key={contact.id} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: i < decryptedContacts.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
+                <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                  {contact.contact_name}
+                  {contact.relationship && <span style={{ color: '#8899BB', fontWeight: 400, marginLeft: 8 }}>({contact.relationship})</span>}
                 </div>
-              )
-            })}
+                <div style={{ color: '#8899BB', fontSize: '0.9rem', marginBottom: 8 }}>{contact.phone_masked}</div>
+                <a
+                  href={`tel:${contact.phone_real}`}
+                  style={{
+                    display: 'block', background: '#00CC66', color: '#fff',
+                    borderRadius: 10, padding: '12px', textAlign: 'center',
+                    fontWeight: 700, fontSize: '1rem', textDecoration: 'none',
+                    boxShadow: '0 4px 15px rgba(0,204,102,0.3)',
+                    minHeight: '48px'
+                  }}
+                >
+                  📞 Call {contact.contact_name}
+                </a>
+              </div>
+            ))}
           </div>
-        </div>
 
-        {/* WhatsApp Share Button */}
-        <div className="pt-8">
+          {/* First Aid Hints */}
+          {triage.firstAidHints.length > 0 && (
+            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontWeight: 700, marginBottom: 12 }}>🩺 First Aid Guidance</div>
+              {triage.firstAidHints.map((hint: string, i: number) => (
+                <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
+                  <span style={{ color: '#FF2D2D', fontWeight: 700, minWidth: 20 }}>{i + 1}.</span>
+                  <span style={{ color: '#F0F4FF', fontSize: '0.9rem' }}>{hint}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* WhatsApp Share */}
           <a
-            href={`https://wa.me/?text=${encodeURIComponent(dict.rescue.notifyMessage.replace('{name}', profile.member_name))}`}
+            href={`https://wa.me/?text=${encodeURIComponent(`🚨 EMERGENCY ALERT 🚨\n\nI have found ${profile.member_name} who needs emergency help.\nPlease call immediately.\n\nSent via MediLink Emergency ID\nhttps://medilink-hazel.vercel.app`)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full block text-center bg-[#25D366] text-white font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(37,211,102,0.3)] hover:bg-[#1ebd59] transition-all hover:scale-[1.02]"
+            style={{
+              display: 'block', background: '#25D366', color: '#fff',
+              borderRadius: 12, padding: '14px', textAlign: 'center',
+              fontWeight: 700, fontSize: '1rem', textDecoration: 'none',
+              marginBottom: 24,
+              minHeight: '48px'
+            }}
           >
-            {dict.rescue.shareLocation}
+            📲 Send Emergency Alert via WhatsApp
           </a>
+
+          <div style={{ textAlign: 'center', color: '#445566', fontSize: '0.8rem', paddingBottom: 32 }}>
+            Powered by MediLink • medilink-hazel.vercel.app
+          </div>
         </div>
       </div>
-      
-      <footer className="text-center py-8 text-[#445566] text-sm border-t border-white/5 relative z-10 bg-[#080B14]">
-        Powered by <Link href="/" className="font-bold text-white hover:text-[#FF2D2D] transition-colors">MediLink</Link>
-      </footer>
+    )
+  } catch (error: any) {
+    return (
+      <div style={{ background: '#080B14', minHeight: '100vh', color: '#F0F4FF', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: 16 }}>⚠️</div>
+          <div style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: 8 }}>Something went wrong</div>
+          <div style={{ color: '#8899BB', fontSize: '0.9rem' }}>{error?.message || 'Unknown error'}</div>
+        </div>
+      </div>
+    )
+  }
+}
+
+function ErrorPage({ message }: { message: string }) {
+  return (
+    <div style={{ background: '#080B14', minHeight: '100vh', color: '#F0F4FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ textAlign: 'center', padding: 20 }}>
+        <div style={{ fontSize: '3rem', marginBottom: 16 }}>❌</div>
+        <div style={{ fontSize: '1.2rem', fontWeight: 600 }}>{message}</div>
+      </div>
     </div>
   )
 }

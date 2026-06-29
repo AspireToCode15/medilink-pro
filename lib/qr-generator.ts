@@ -1,7 +1,7 @@
 import QRCode from 'qrcode';
 
 export async function generateQRDataURL(token: string): Promise<string> {
-  const url = `${process.env.NEXT_PUBLIC_APP_URL}/rescue/${token}`;
+  const url = `${process.env.NEXT_PUBLIC_APP_URL || 'https://medilink-hazel.vercel.app'}/rescue/${token}`;
   try {
     const dataUrl = await QRCode.toDataURL(url, {
       width: 400,

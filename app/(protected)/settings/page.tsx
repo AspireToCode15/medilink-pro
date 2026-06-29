@@ -103,7 +103,7 @@ export default function SettingsPage() {
         <CardContent className="flex flex-col items-center py-6">
           {profile?.rescue_token && (
             <QRCodeDisplay 
-              url={`${process.env.NEXT_PUBLIC_APP_URL || 'https://medilink-pro.vercel.app'}/rescue/${profile.rescue_token}`} 
+              url={`${process.env.NEXT_PUBLIC_APP_URL || 'https://medilink-hazel.vercel.app'}/rescue/${profile.rescue_token}`} 
               size={200} 
             />
           )}

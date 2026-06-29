@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { profileSetupSchema, emergencyContactsSchema } from '@/lib/validators';
 import { encryptPhone, maskPhone } from '@/lib/contact-masker';
 import { v4 as uuidv4 } from 'uuid';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 export async function POST(req: Request) {
   try {
@@ -16,6 +17,28 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
+    
+    // Ensure profile exists in profiles table
+    const supabaseAdmin = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+
+    const { data: existingProfileTrigger } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .single()
+
+    if (!existingProfileTrigger) {
+      await supabaseAdmin.from('profiles').insert({
+        id: user.id,
+        email: user.email,
+        full_name: user.user_metadata?.full_name || '',
+        rescue_token: uuidv4()
+      })
+    }
     
     // Parse the merged body of profile and contacts
     const profileData = profileSetupSchema.parse(body.profile);

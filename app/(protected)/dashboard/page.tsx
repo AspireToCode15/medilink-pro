@@ -30,7 +30,7 @@ export default async function DashboardPage() {
     .single()
 
   // For simplicity, generate the rescue URL using the token
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://medilink-pro.vercel.app'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://medilink-hazel.vercel.app'
   const rescueUrl = profile?.rescue_token ? `${appUrl}/rescue/${profile.rescue_token}` : null
 
   const isProfileComplete = !!medicalProfile?.blood_group
