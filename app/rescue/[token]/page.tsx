@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@supabase/supabase-js'
 import { decryptPhone } from '@/lib/contact-masker'
 import { runTriageEngine } from '@/lib/mediq-engine/triage-classifier'
+import { MapPin } from 'lucide-react'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -176,6 +177,34 @@ export default async function RescuePage({
               ))}
             </div>
           )}
+
+          {/* Find Nearby Hospitals */}
+          <a
+            href="https://www.google.com/maps/search/hospitals+near+me"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              background: 'linear-gradient(135deg, #FF2D2D 0%, #B30000 100%)',
+              color: '#fff',
+              borderRadius: 12,
+              padding: '14px',
+              textAlign: 'center',
+              fontWeight: 700,
+              fontSize: '1rem',
+              textDecoration: 'none',
+              marginBottom: 16,
+              minHeight: '48px',
+              boxShadow: '0 4px 20px rgba(255, 45, 45, 0.45)',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <MapPin size={20} style={{ flexShrink: 0 }} />
+            Find Nearby Hospitals
+          </a>
 
           {/* WhatsApp Share */}
           <a
