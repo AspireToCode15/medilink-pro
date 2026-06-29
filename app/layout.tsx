@@ -3,6 +3,7 @@ import LoadingScreen from '@/components/shared/LoadingScreen';
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Space_Grotesk, Inter, JetBrains_Mono } from 'next/font/google'
+import NextTopLoader from 'nextjs-toploader';
 
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-heading' })
 const inter = Inter({ subsets: ['latin'], variable: '--font-body' })
@@ -78,7 +79,18 @@ export default function RootLayout({
     <html lang="en" className={`dark ${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
       <head>
       </head>
-      <body className="min-h-screen bg-background font-sans antialiased text-foreground selection:bg-primary/30">
+      <body className="min-h-screen bg-background font-sans antialiased text-foreground selection:bg-[#FF2D2D]/30 selection:text-white">
+        <NextTopLoader
+          color="#FF2D2D"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #FF2D2D,0 0 5px #FF2D2D"
+        />
         <LoadingScreen />
         <Navbar />
         <main className="flex-1">
