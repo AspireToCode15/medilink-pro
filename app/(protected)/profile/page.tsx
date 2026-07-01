@@ -71,56 +71,67 @@ function ProfileWizardContent() {
 
   useEffect(() => {
     async function loadData() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      setUserId(user.id)
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) throw authError || new Error('User not found')
+        setUserId(user.id)
 
-      const { data: medicalProfile } = await supabase
-        .from('medical_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_primary', true)
-        .single()
-
-      if (medicalProfile) {
-        setMedicalProfileId(medicalProfile.id)
-        setProfile({
-          fullName: medicalProfile.member_name || '',
-          age: medicalProfile.age?.toString() || '',
-          bloodGroup: medicalProfile.blood_group || 'A+',
-          weight: medicalProfile.weight_kg?.toString() || '',
-          height: medicalProfile.height_cm?.toString() || '',
-          organDonor: medicalProfile.organ_donor || false,
-          conditions: medicalProfile.conditions || '',
-          allergies: medicalProfile.allergies || '',
-          medications: medicalProfile.current_medications || ''
-        })
-
-        const { data: loadedContacts } = await supabase
-          .from('emergency_contacts')
+        const { data: medicalProfile, error: profileError } = await supabase
+          .from('medical_profiles')
           .select('*')
-          .eq('medical_profile_id', medicalProfile.id)
-          .order('priority', { ascending: true })
-
-        if (loadedContacts && loadedContacts.length > 0) {
-          setContacts(loadedContacts.map(c => ({
-            name: c.contact_name,
-            relationship: c.relationship,
-            phone: c.phone_masked
-          })))
-        }
-      } else {
-        const { data: userProfile } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
+          .eq('is_primary', true)
           .single()
-          
-        if (userProfile) {
-          setProfile(p => ({ ...p, fullName: userProfile.full_name || '' }))
+
+        if (profileError && profileError.code !== 'PGRST116') throw profileError // Ignore row-not-found error code
+
+        if (medicalProfile) {
+          setMedicalProfileId(medicalProfile.id)
+          setProfile({
+            fullName: medicalProfile.member_name || '',
+            age: medicalProfile.age?.toString() || '',
+            bloodGroup: medicalProfile.blood_group || 'A+',
+            weight: medicalProfile.weight_kg?.toString() || '',
+            height: medicalProfile.height_cm?.toString() || '',
+            organDonor: medicalProfile.organ_donor || false,
+            conditions: medicalProfile.conditions || '',
+            allergies: medicalProfile.allergies || '',
+            medications: medicalProfile.current_medications || ''
+          })
+
+          const { data: loadedContacts, error: contactsError } = await supabase
+            .from('emergency_contacts')
+            .select('*')
+            .eq('medical_profile_id', medicalProfile.id)
+            .order('priority', { ascending: true })
+
+          if (contactsError) throw contactsError
+
+          if (loadedContacts && loadedContacts.length > 0) {
+            setContacts(loadedContacts.map(c => ({
+              name: c.contact_name,
+              relationship: c.relationship,
+              phone: c.phone_masked
+            })))
+          }
+        } else {
+          const { data: userProfile, error: userProfileError } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .single()
+            
+          if (userProfileError) throw userProfileError
+          if (userProfile) {
+            setProfile(p => ({ ...p, fullName: userProfile.full_name || '' }))
+          }
         }
+      } catch (err: any) {
+        console.error('Error loading profile wizard data:', err)
+        setError(err.message || 'Failed to load profile details')
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
     loadData()
   }, [supabase])
@@ -134,8 +145,60 @@ function ProfileWizardContent() {
     setContacts(newContacts)
   }
 
+  const validateStep = (step: number): boolean => {
+    setError(null)
+    if (step === 1) {
+      if (!profile.fullName || profile.fullName.trim().length < 2) {
+        setError('Full Name must be at least 2 characters.')
+        return false
+      }
+      const ageNum = parseInt(profile.age, 10)
+      if (isNaN(ageNum) || ageNum < 1 || ageNum > 120 || ageNum.toString() !== profile.age.trim()) {
+        setError('Age must be a positive integer between 1 and 120.')
+        return false
+      }
+    } else if (step === 3) {
+      const activeContacts = contacts.filter(
+        c => c.name.trim() !== '' || c.relationship.trim() !== '' || c.phone.trim() !== ''
+      )
+      if (activeContacts.length === 0) {
+        setError('At least one emergency contact is required.')
+        return false
+      }
+      for (let i = 0; i < activeContacts.length; i++) {
+        const contact = activeContacts[i]
+        if (!contact.name || contact.name.trim().length < 2) {
+          setError(`Emergency Contact #${i + 1} name must be at least 2 characters.`)
+          return false
+        }
+        if (!contact.relationship || contact.relationship.trim().length === 0) {
+          setError(`Emergency Contact #${i + 1} relationship is required.`)
+          return false
+        }
+        const phoneTrimmed = contact.phone.trim()
+        if (!phoneTrimmed) {
+          setError(`Emergency Contact #${i + 1} phone number is required.`)
+          return false
+        }
+        const phoneRegex = /^\+?[0-9*]{10,15}$/
+        if (!phoneRegex.test(phoneTrimmed)) {
+          setError(`Emergency Contact #${i + 1} phone number is invalid (must be 10-15 digits).`)
+          return false
+        }
+      }
+    }
+    return true
+  }
+
+  const handleNextClick = () => {
+    if (validateStep(currentStep)) {
+      nextStep()
+    }
+  }
+
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
+    if (!validateStep(3)) return
     setSaving(true)
     setError(null)
     
@@ -161,9 +224,9 @@ function ProfileWizardContent() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to save')
       
-      if (data.medicalProfileId) setMedicalProfileId(data.medicalProfileId)
-      else if (data.medicalProfile?.id) setMedicalProfileId(data.medicalProfile.id)
-      else if (data.id) setMedicalProfileId(data.id)
+      if (data?.medicalProfileId) setMedicalProfileId(data.medicalProfileId)
+      else if (data?.medicalProfile?.id) setMedicalProfileId(data.medicalProfile.id)
+      else if (data?.id) setMedicalProfileId(data.id)
       
       nextStep()
     } catch (err: any) {
@@ -181,12 +244,16 @@ function ProfileWizardContent() {
     <div className="max-w-3xl mx-auto space-y-8">
       {/* Header & Progress Bar */}
       <div>
-        <h1 className="text-3xl font-heading font-bold text-white mb-6">Profile Setup</h1>
+        <div className="flex justify-between items-end mb-6">
+          <h1 className="text-3xl font-heading font-bold text-white">Profile Setup</h1>
+          <span className="text-sm font-medium text-[#8899BB] mb-1">
+            Step {currentStep} of {steps.length}
+          </span>
+        </div>
         <div className="relative h-2 bg-[#0F1420] rounded-full overflow-hidden">
           <motion.div 
             className="absolute top-0 left-0 h-full bg-[#FF2D2D] rounded-full"
-            initial={{ width: `${((currentStep - 1) / 4) * 100}%` }}
-            animate={{ width: `${(currentStep / 4) * 100}%` }}
+            animate={{ width: `${(currentStep / steps.length) * 100}%` }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
           />
         </div>
@@ -364,31 +431,43 @@ function ProfileWizardContent() {
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between pt-6 border-t border-white/10">
-        {currentStep > 1 && currentStep < 4 ? (
-          <button onClick={prevStep} className="flex items-center gap-2 text-[#8899BB] hover:text-white px-4 py-2 transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Back
-          </button>
-        ) : <div />}
-        
+      <div className="flex flex-col gap-3 pt-6 border-t border-white/10">
         {currentStep < 3 ? (
-          <button onClick={nextStep} className="flex items-center gap-2 bg-[#FF2D2D] text-white px-6 py-2 rounded-lg hover:bg-[#ff4545] transition-colors shadow-[0_0_15px_rgba(255,45,45,0.3)]">
-            Next <ArrowRight className="w-4 h-4" />
+          <button 
+            type="button"
+            onClick={handleNextClick} 
+            className="w-full min-h-[48px] bg-[#FF2D2D] hover:bg-[#ff4545] text-white rounded-lg flex items-center justify-center font-semibold transition-colors shadow-[0_0_15px_rgba(255,45,45,0.3)]"
+          >
+            Next →
           </button>
         ) : currentStep === 3 ? (
-          <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 bg-[#FF2D2D] text-white px-6 py-2 rounded-lg hover:bg-[#ff4545] transition-colors shadow-[0_0_15px_rgba(255,45,45,0.3)] disabled:opacity-50">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save & Secure Profile'}
+          <button 
+            type="button"
+            onClick={handleSave} 
+            disabled={saving} 
+            className="w-full min-h-[48px] bg-[#FF2D2D] hover:bg-[#ff4545] text-white rounded-lg flex items-center justify-center font-semibold transition-colors shadow-[0_0_15px_rgba(255,45,45,0.3)] disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Next →'}
           </button>
         ) : currentStep === 4 ? (
-          <div className="flex w-full justify-between items-center">
-            <button onClick={() => router.push('/dashboard')} className="text-[#8899BB] hover:text-white px-4 py-2 transition-colors">
-              Skip for now
-            </button>
-            <button onClick={() => router.push('/dashboard')} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors shadow-[0_0_15px_rgba(34,197,94,0.3)]">
-              Complete Setup
-            </button>
-          </div>
+          <button 
+            type="button"
+            onClick={() => router.push('/dashboard')} 
+            className="w-full min-h-[48px] bg-[#FF2D2D] hover:bg-[#ff4545] text-white rounded-lg flex items-center justify-center font-semibold transition-colors shadow-[0_0_15px_rgba(255,45,45,0.3)]"
+          >
+            Next →
+          </button>
         ) : null}
+
+        {currentStep > 1 && (
+          <button 
+            type="button"
+            onClick={prevStep} 
+            className="w-full py-2.5 flex items-center justify-center gap-2 text-[#8899BB] hover:text-white transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+        )}
       </div>
     </div>
   )

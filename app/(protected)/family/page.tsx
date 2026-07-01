@@ -12,23 +12,31 @@ export default function FamilyPage() {
   const supabase = createClient()
   const [members, setMembers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadMembers() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) throw authError || new Error('No user found')
 
-      const { data } = await supabase
-        .from('medical_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_primary', false)
-        .order('created_at', { ascending: false })
+        const { data, error: profileError } = await supabase
+          .from('medical_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_primary', false)
+          .order('created_at', { ascending: false })
 
-      if (data) {
-        setMembers(data)
+        if (profileError) throw profileError
+        if (data) {
+          setMembers(data)
+        }
+      } catch (err: any) {
+        console.error('Error loading family members:', err)
+        setError(err.message || 'Failed to load family members')
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
     loadMembers()
   }, [])
@@ -49,6 +57,12 @@ export default function FamilyPage() {
         </Button>
       </div>
 
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       {members.length === 0 ? (
         <Card className="glass-card text-center py-12">
           <CardContent className="flex flex-col items-center">
@@ -63,18 +77,18 @@ export default function FamilyPage() {
       ) : (
         <div className="grid md:grid-cols-2 gap-4">
           {members.map(member => (
-            <Card key={member.id} className="glass-card">
+            <Card key={member?.id} className="glass-card">
               <CardHeader className="pb-3">
-                <CardTitle>{member.member_name}</CardTitle>
-                <CardDescription>{member.member_label} • {member.age} Yrs • {member.blood_group}</CardDescription>
+                <CardTitle>{member?.member_name || 'Unnamed Member'}</CardTitle>
+                <CardDescription>{member?.member_label || 'Dependent'} • {member?.age || 0} Yrs • {member?.blood_group || 'Unknown'}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-sm text-muted-foreground truncate">
-                  {member.conditions || 'No conditions'}
+                  {member?.conditions || 'No conditions'}
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between border-t border-border pt-4">
-                <Button variant="outline" className="min-h-[48px]" onClick={() => window.open(`/rescue/${member.rescue_token}`, '_blank')}>
+                <Button variant="outline" className="min-h-[48px]" onClick={() => member?.rescue_token && window.open(`/rescue/${member.rescue_token}`, '_blank')}>
                   <QrCode className="h-4 w-4 mr-2" /> View QR
                 </Button>
                 <Button variant="ghost" className="text-red-500 hover:text-red-400 min-h-[48px] min-w-[48px]">

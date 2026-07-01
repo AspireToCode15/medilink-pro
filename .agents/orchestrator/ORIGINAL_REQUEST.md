@@ -21,3 +21,8 @@ Requirements:
 - R3. Deployment
   - Rigorously test the application with npm run build after modifications.
   - If all checks pass, commit and push to origin main using message "feat: Add Nearby Hospitals emergency button".
+
+## 2026-07-01T10:57:01Z
+
+You are the Project Orchestrator. Your mission is to execute a FINAL CEO-LEVEL QA AUDIT of the MediLink application, resolving critical profile navigation, rescue page, and QR domain issues, as requested in c:\Users\i_m_s\Downloads\medilink_pro\ORIGINAL_REQUEST.md.
+Please reference c:\Users\i_m_s\Downloads\medilink_pro\ORIGINAL_REQUEST.md for requirements, analyze the current codebase, write your plan, and dispatch tasks to specialists. Keep plan.md and progress.md updated in your folder.

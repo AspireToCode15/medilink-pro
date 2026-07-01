@@ -5,23 +5,25 @@ import { decryptPhone } from '@/lib/contact-masker'
 import { runTriageEngine } from '@/lib/mediq-engine/triage-classifier'
 import { MapPin } from 'lucide-react'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-)
-
 export default async function RescuePage({
   params,
 }: {
   params: Promise<{ token: string }>
 }) {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://medilink-hazel.vercel.app'
   try {
     const { token } = await params
 
     if (!token) {
-      return <ErrorPage message="Invalid QR code" />
+      throw new Error("Invalid or expired QR code")
     }
+
+    // Instantiating the service role client inside the component scope
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
 
     // Fetch medical profile
     const { data: profile, error: profileError } = await supabaseAdmin
@@ -31,7 +33,7 @@ export default async function RescuePage({
       .single()
 
     if (profileError || !profile) {
-      return <ErrorPage message="QR code is invalid or expired" />
+      throw new Error("Invalid or expired QR code")
     }
 
     // Fetch emergency contacts
@@ -208,7 +210,7 @@ export default async function RescuePage({
 
           {/* WhatsApp Share */}
           <a
-            href={`https://wa.me/?text=${encodeURIComponent(`🚨 EMERGENCY ALERT 🚨\n\nI have found ${profile.member_name} who needs emergency help.\nPlease call immediately.\n\nSent via MediLink Emergency ID\nhttps://medilink-hazel.vercel.app`)}`}
+            href={`https://wa.me/?text=${encodeURIComponent(`🚨 EMERGENCY ALERT 🚨\n\nI have found ${profile.member_name} who needs emergency help.\nPlease call immediately.\n\nSent via MediLink Emergency ID\n${baseUrl}`)}`}
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -223,31 +225,19 @@ export default async function RescuePage({
           </a>
 
           <div style={{ textAlign: 'center', color: '#445566', fontSize: '0.8rem', paddingBottom: 32 }}>
-            Powered by MediLink • medilink-hazel.vercel.app
+            Powered by MediLink • {baseUrl.replace(/^https?:\/\//, '')}
           </div>
         </div>
       </div>
     )
   } catch (error: any) {
     return (
-      <div style={{ background: '#080B14', minHeight: '100vh', color: '#F0F4FF', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-        <div style={{ textAlign: 'center' }}>
+      <div style={{ background: '#080B14', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FF2D2D', fontFamily: 'Inter, sans-serif' }}>
+        <div style={{ textAlign: 'center', padding: 20 }}>
           <div style={{ fontSize: '3rem', marginBottom: 16 }}>⚠️</div>
-          <div style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: 8 }}>Something went wrong</div>
-          <div style={{ color: '#8899BB', fontSize: '0.9rem' }}>{error?.message || 'Unknown error'}</div>
+          <div style={{ fontSize: '1.2rem', fontWeight: 600 }}>Invalid or expired QR code</div>
         </div>
       </div>
     )
   }
-}
-
-function ErrorPage({ message }: { message: string }) {
-  return (
-    <div style={{ background: '#080B14', minHeight: '100vh', color: '#F0F4FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ textAlign: 'center', padding: 20 }}>
-        <div style={{ fontSize: '3rem', marginBottom: 16 }}>❌</div>
-        <div style={{ fontSize: '1.2rem', fontWeight: 600 }}>{message}</div>
-      </div>
-    </div>
-  )
 }

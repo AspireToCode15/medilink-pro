@@ -57,7 +57,7 @@ function HeroContent() {
               <motion.button 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.97 }}
-                className="w-full sm:w-auto bg-[#FF2D2D] hover:bg-[#ff4545] text-white px-8 py-3 rounded-full font-medium transition-all shadow-[0_0_20px_rgba(255,45,45,0.3)] hover:shadow-[0_0_30px_rgba(255,45,45,0.5)] emergency-pulse"
+                className="w-full sm:w-auto bg-[#FF2D2D] hover:bg-[#ff4545] text-white px-8 py-3 rounded-full font-medium transition-all shadow-[0_0_20px_rgba(255,45,45,0.3)] hover:shadow-[0_0_30px_rgba(255,45,45,0.5)]"
               >
                 Create Free MediLink →
               </motion.button>

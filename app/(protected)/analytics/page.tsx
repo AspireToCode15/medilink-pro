@@ -5,67 +5,78 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Loader2, Activity } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export default function AnalyticsPage() {
   const supabase = createClient()
   const [logs, setLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [chartData, setChartData] = useState<any[]>([])
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchAnalytics() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) throw authError || new Error('No user found')
 
-      // Get user's profiles
-      const { data: profiles } = await supabase
-        .from('medical_profiles')
-        .select('id')
-        .eq('user_id', user.id)
+        // Get user's profiles
+        const { data: profiles, error: profilesError } = await supabase
+          .from('medical_profiles')
+          .select('id')
+          .eq('user_id', user.id)
 
-      if (profiles && profiles.length > 0) {
-        const profileIds = profiles.map(p => p.id)
-        
-        // Get scan logs for last 30 days
-        const thirtyDaysAgo = new Date()
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+        if (profilesError) throw profilesError
 
-        const { data: scanLogs } = await supabase
-          .from('scan_logs')
-          .select('*')
-          .in('medical_profile_id', profileIds)
-          .gte('scanned_at', thirtyDaysAgo.toISOString())
-          .order('scanned_at', { ascending: false })
-
-        if (scanLogs) {
-          setLogs(scanLogs)
+        if (profiles && profiles.length > 0) {
+          const profileIds = profiles.map(p => p.id)
           
-          // Group for chart (last 30 days)
-          const daysData: Record<string, number> = {}
-          for (let i = 29; i >= 0; i--) {
-            const d = new Date()
-            d.setDate(d.getDate() - i)
-            const dateStr = d.toISOString().split('T')[0]
-            daysData[dateStr] = 0
-          }
+          // Get scan logs for last 30 days
+          const thirtyDaysAgo = new Date()
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-          scanLogs.forEach(log => {
-            const dateStr = log.scanned_at.split('T')[0]
-            if (daysData[dateStr] !== undefined) {
-              daysData[dateStr]++
+          const { data: scanLogs, error: logsError } = await supabase
+            .from('scan_logs')
+            .select('*')
+            .in('medical_profile_id', profileIds)
+            .gte('scanned_at', thirtyDaysAgo.toISOString())
+            .order('scanned_at', { ascending: false })
+
+          if (logsError) throw logsError
+
+          if (scanLogs) {
+            setLogs(scanLogs)
+            
+            // Group for chart (last 30 days)
+            const daysData: Record<string, number> = {}
+            for (let i = 29; i >= 0; i--) {
+              const d = new Date()
+              d.setDate(d.getDate() - i)
+              const dateStr = d.toISOString().split('T')[0]
+              daysData[dateStr] = 0
             }
-          })
 
-          const formattedData = Object.entries(daysData).map(([date, count]) => ({
-            date: date.substring(5), // MM-DD
-            scans: count
-          }))
+            scanLogs.forEach(log => {
+              const dateStr = log.scanned_at?.split('T')[0]
+              if (dateStr && daysData[dateStr] !== undefined) {
+                daysData[dateStr]++
+              }
+            })
 
-          setChartData(formattedData)
+            const formattedData = Object.entries(daysData).map(([date, count]) => ({
+              date: date.substring(5), // MM-DD
+              scans: count
+            }))
+
+            setChartData(formattedData)
+          }
         }
+      } catch (err: any) {
+        console.error('Error loading analytics:', err)
+        setError(err.message || 'Failed to load analytics data')
+      } finally {
+        setLoading(false)
       }
-      
-      setLoading(false)
     }
 
     fetchAnalytics()
@@ -83,6 +94,12 @@ export default function AnalyticsPage() {
           <p className="text-muted-foreground">Track when and where your Medical IDs were scanned.</p>
         </div>
       </div>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid md:grid-cols-3 gap-4">
         <Card className="glass-card col-span-1 border-primary/20 bg-primary/5">
@@ -146,7 +163,7 @@ export default function AnalyticsPage() {
                   <div>
                     <div className="font-medium">QR Scanned</div>
                     <div className="text-xs text-muted-foreground font-mono mt-1">
-                      {log.ip_address || 'Unknown IP'} • {log.user_agent ? log.user_agent.substring(0, 30) : 'Unknown Device'}...
+                      {log.ip_address || 'Unknown IP'} • {log.user_agent?.substring(0, 30) || 'Unknown Client'}...
                     </div>
                   </div>
                   <div className="text-right">

@@ -6,9 +6,11 @@ import { Loader2 } from 'lucide-react'
 
 export default function QRCodeDisplay({ url, size = 200 }: { url: string, size?: number }) {
   const [qrSrc, setQrSrc] = useState<string>('')
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://medilink-hazel.vercel.app'
 
   useEffect(() => {
-    QRCode.toDataURL(url, {
+    const targetUrl = url.startsWith('http') ? url : `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`
+    QRCode.toDataURL(targetUrl, {
       width: size,
       margin: 2,
       color: {
@@ -18,7 +20,7 @@ export default function QRCodeDisplay({ url, size = 200 }: { url: string, size?:
     })
     .then(url => setQrSrc(url))
     .catch(err => console.error('QR Generate Error:', err))
-  }, [url, size])
+  }, [url, size, baseUrl])
 
   if (!qrSrc) return <div className="flex justify-center items-center h-32 w-32 bg-white/5 rounded-xl"><Loader2 className="w-6 h-6 animate-spin text-[#FF2D2D]" /></div>
 

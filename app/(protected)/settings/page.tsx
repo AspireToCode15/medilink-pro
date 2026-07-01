@@ -18,20 +18,29 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://medilink-hazel.vercel.app'
+
   useEffect(() => {
     async function loadData() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) throw authError || new Error('No user found')
 
-      const { data: medicalProfile } = await supabase
-        .from('medical_profiles')
-        .select('id, rescue_token')
-        .eq('user_id', user.id)
-        .eq('is_primary', true)
-        .single()
+        const { data: medicalProfile, error: profileError } = await supabase
+          .from('medical_profiles')
+          .select('id, rescue_token')
+          .eq('user_id', user.id)
+          .eq('is_primary', true)
+          .single()
 
-      setProfile(medicalProfile)
-      setLoading(false)
+        if (profileError) throw profileError
+        setProfile(medicalProfile)
+      } catch (err: any) {
+        console.error('Error loading settings:', err)
+        setError(err.message || 'Failed to load profile settings')
+      } finally {
+        setLoading(false)
+      }
     }
     loadData()
   }, [])
@@ -103,7 +112,7 @@ export default function SettingsPage() {
         <CardContent className="flex flex-col items-center py-6">
           {profile?.rescue_token && (
             <QRCodeDisplay 
-              url={`${process.env.NEXT_PUBLIC_APP_URL || 'https://medilink-hazel.vercel.app'}/rescue/${profile.rescue_token}`} 
+              url={`${baseUrl}/rescue/${profile.rescue_token}`} 
               size={200} 
             />
           )}

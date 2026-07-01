@@ -1,11 +1,21 @@
-# Find Nearby Hospitals Feature Plan
+# Plan: MediLink CEO-Level QA Audit
 
 ## Objective
-Add a "Find Nearby Hospitals" emergency button to the bottom of the rescue page (`app/rescue/[token]/page.tsx`). The button must be a Server Component compatible link (`<a>` tag with target="_blank"), responsive & premium UI, styled as a prominent emergency action, using a lucide-react icon, without using client-side hooks, and verify everything passes build and tests, then push to GitHub.
+Execute a final CEO-level QA audit of the MediLink application, resolving critical profile navigation, rescue page, and QR domain issues, global polishing, rigorous verification (tsc, build, manual checklists, forensic auditing), and deployment.
+
+## Milestones
+1. **Decompose & Plan**: Establish the live PROJECT.md detailing the architecture and contract changes for Profile Form, Rescue Page, QR domain and Global Polishing.
+2. **Codebase Exploration**: Run Explorers to identify file structures, component hook usage, Supabase client setups, and scan for any global polishing opportunities.
+3. **Execution & Implementation**: Use Workers to implement form navigation with validation, rewrite the Rescue Page as a dynamic RSC with try/catch fallback, update QR code domain references dynamically, and polish the codebase.
+4. **Verification**: Deploy Reviewers, Challengers, and Forensic Auditors to verify code correctness, SSR safety, type safety, build outputs, and integrity.
+5. **CEO Demo Checklist Verification**: Perform empirical manual checks.
+6. **Deployment**: Commit and push changes to origin main with message "Final QA fixes - CEO demo ready".
 
 ## Steps
-1. **Explore & Analyze**: Spawn 3 Explorer agents to look at `app/rescue/[token]/page.tsx` and identify exactly where to place the button and what premium/emergency style classes and Lucide icons are used.
-2. **Decompose & Plan**: Write `PROJECT.md` specifying the interface/UI design changes.
-3. **Execute**: Spawn 1 Worker to implement the changes and verify it builds.
-4. **Verify**: Spawn 2 Reviewers, 2 Challengers, and 1 Forensic Auditor to verify functionality, SSR constraints, code styling, and ensure no integrity issues.
-5. **Release**: Push to `origin main` using the specified commit message.
+1. Update `PROJECT.md` with the new design details.
+2. Update `progress.md`.
+3. Spawn Explorer agents to inspect implementation paths and suggest exact fixes.
+4. Spawn Worker to implement fixes.
+5. Spawn Reviewers, Challengers, and Auditor to verify.
+6. Run build verification.
+7. Push to git.
